@@ -28,8 +28,8 @@ class Estado
   
     fechou = 0
     caixas_da_linha(tipo, fileira, coluna).each do |i, j|
-      next unless @preenchida_por[i][j].nil?
-      next unless caixa_completa?(i, j)
+      next unless @preenchida_por[i][j].nil? # Pula essa volta se a caixa encostada já tem dono
+      next unless caixa_completa?(i, j) # Pula essa volta se a caixa encostada não está completa
   
       @preenchida_por[i][j] = @vez
       @placar[@vez] += 1
