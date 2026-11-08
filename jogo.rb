@@ -1,5 +1,5 @@
 class Estado
-  attr_reader :horizontais, :verticais, :pertence_a, :placar, :vez
+  attr_reader :horizontais, :verticais, :preenchida_por, :placar, :vez
 
   def initialize
     @horizontais = [
@@ -11,7 +11,7 @@ class Estado
       [false, false, false],
       [false, false, false]
     ]
-    @pertence_a = [
+    @preenchida_por = [
       [nil, nil],
       [nil, nil]
     ]
@@ -28,10 +28,10 @@ class Estado
   
     fechou = 0
     caixas_da_linha(tipo, fileira, coluna).each do |i, j|
-      next unless @pertence_a[i][j].nil?
+      next unless @preenchida_por[i][j].nil?
       next unless caixa_completa?(i, j)
   
-      @pertence_a[i][j] = @vez
+      @preenchida_por[i][j] = @vez
       @placar[@vez] += 1
       fechou += 1
     end
