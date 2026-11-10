@@ -89,4 +89,70 @@ class Estado
       jogar(tipo, fileira, coluna)
     end
   end
+
+  def copia
+    copia = Estado.new
+  
+    @horizontais.each_with_index do |fileira, f|
+      fileira.each_with_index do |marcada, c|
+        copia.horizontais[f][c] = marcada
+      end
+    end
+  
+    @verticais.each_with_index do |fileira, f|
+      fileira.each_with_index do |marcada, c|
+        copia.verticais[f][c] = marcada
+      end
+    end
+  
+    @preenchida_por.each_with_index do |fileira, f|
+      fileira.each_with_index do |dono, c|
+        copia.preenchida_por[f][c] = dono
+      end
+    end
+  
+    copia.placar[0] = @placar[0]
+    copia.placar[1] = @placar[1]
+    copia.definir_vez(@vez)
+    copia
+  end
+  
+  def definir_vez(jogador)
+    @vez = jogador
+  end
+end
+
+class No
+  attr_reader :estado, :pai, :visitas, :valor, :filhos
+
+  def initialize(estado, pai = nil)
+    @estado = estado
+    @pai = pai
+    @visitas = 0
+    @valor = 0
+    @filhos = []
+  end
+
+  def expandir(tipo, fileira, coluna)
+    proximo = @estado.copia
+    proximo.jogar(tipo, fileira, coluna)
+    filho = No.new(proximo, self)
+    @filhos << filho
+    filho
+  end
+
+  def simular
+    atual = @estado.copia
+    jogador = @estado.vez
+  
+    atual.partida_aleatoria
+  
+    if atual.placar[jogador] > atual.placar[1 - jogador]
+      1
+    elsif atual.placar[jogador] < atual.placar[1 - jogador]
+      -1
+    else
+      0
+    end
+  end
 end
