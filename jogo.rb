@@ -25,20 +25,20 @@ class Estado
     else
       @verticais[fileira][coluna] = true
     end
-  
+
     fechou = 0
     caixas_da_linha(tipo, fileira, coluna).each do |i, j|
       next unless @preenchida_por[i][j].nil? # Pula essa volta se a caixa encostada já tem dono
       next unless caixa_completa?(i, j) # Pula essa volta se a caixa encostada não está completa
-  
+
       @preenchida_por[i][j] = @vez
       @placar[@vez] += 1
       fechou += 1
     end
-  
+
     @vez = 1 - @vez if fechou == 0
   end
-  
+
   def caixas_da_linha(tipo, fileira, coluna)
     if tipo == :h
       caixas = []
@@ -67,19 +67,19 @@ class Estado
 
   def jogadas_livres
     livres = []
-  
+
     @horizontais.each_with_index do |fileira, f|
       fileira.each_with_index do |marcada, c|
         livres << [:h, f, c] if marcada == false
       end
     end
-  
+
     @verticais.each_with_index do |fileira, f|
       fileira.each_with_index do |marcada, c|
         livres << [:v, f, c] if marcada == false
       end
     end
-  
+
     livres
   end
 
@@ -92,51 +92,53 @@ class Estado
 
   def copia
     copia = Estado.new
-  
+
     @horizontais.each_with_index do |fileira, f|
       fileira.each_with_index do |marcada, c|
         copia.horizontais[f][c] = marcada
       end
     end
-  
+
     @verticais.each_with_index do |fileira, f|
       fileira.each_with_index do |marcada, c|
         copia.verticais[f][c] = marcada
       end
     end
-  
+
     @preenchida_por.each_with_index do |fileira, f|
       fileira.each_with_index do |dono, c|
         copia.preenchida_por[f][c] = dono
       end
     end
-  
+
     copia.placar[0] = @placar[0]
     copia.placar[1] = @placar[1]
     copia.definir_vez(@vez)
     copia
   end
-  
+
   def definir_vez(jogador)
     @vez = jogador
   end
 end
 
 class No
-  attr_reader :estado, :pai, :visitas, :valor, :filhos
+  C = Math.sqrt(2)
+  attr_reader :estado, :pai, :visitas, :valor, :filhos, :jogada
 
-  def initialize(estado, pai = nil)
+  def initialize(estado, pai = nil, jogada = nil)
     @estado = estado
     @pai = pai
     @visitas = 0
     @valor = 0
     @filhos = []
+    @jogada = jogada
   end
 
   def expandir(tipo, fileira, coluna)
     proximo = @estado.copia
     proximo.jogar(tipo, fileira, coluna)
-    filho = No.new(proximo, self)
+    filho = No.new(proximo, self, [tipo, fileira, coluna])
     @filhos << filho
     filho
   end
@@ -144,9 +146,9 @@ class No
   def simular
     atual = @estado.copia
     jogador = @estado.vez
-  
+
     atual.partida_aleatoria
-  
+
     if atual.placar[jogador] > atual.placar[1 - jogador]
       1
     elsif atual.placar[jogador] < atual.placar[1 - jogador]
@@ -155,4 +157,40 @@ class No
       0
     end
   end
+
+  def retropropagar(recompensa)
+    no = self
+  
+    while no
+      no.registrar(recompensa)
+      pai = no.pai
+      break unless pai
+  
+      recompensa = -recompensa if pai.estado.vez != no.estado.vez
+      no = pai
+    end
+  end
+
+  def registrar(recompensa)
+    @visitas += 1
+    @valor += recompensa
+  end
+  
+  def jogadas_nao_expandidas
+    @estado.jogadas_livres - @filhos.map(&:jogada)
+  end
+
+  def uct
+    return Float::INFINITY if @visitas == 0
+
+    media = @valor.to_f / @visitas
+    exploracao = self.class::C * Math.sqrt(Math.log(@pai.visitas) / @visitas)
+    media + exploracao
+  end
+
+  def melhor_filho
+    @filhos.max_by(&:uct)
+  end
+  
 end
+
